@@ -1,0 +1,166 @@
+VERSION 5.00
+Begin VB.PropertyPage ppAnchors 
+   Caption         =   "Anchors"
+   ClientHeight    =   2940
+   ClientLeft      =   0
+   ClientTop       =   0
+   ClientWidth     =   5445
+   PaletteMode     =   0  'Halftone
+   ScaleHeight     =   2940
+   ScaleWidth      =   5445
+   Begin VB.PictureBox picFrame 
+      Height          =   2205
+      Left            =   2670
+      ScaleHeight     =   2145
+      ScaleWidth      =   2625
+      TabIndex        =   1
+      Top             =   540
+      Width           =   2685
+      Begin VB.CommandButton cmdObject 
+         Enabled         =   0   'False
+         Height          =   735
+         Left            =   900
+         TabIndex        =   2
+         Top             =   720
+         Width           =   795
+      End
+      Begin VB.Label lblSides 
+         BackColor       =   &H00FFFFFF&
+         BorderStyle     =   1  'Fixed Single
+         Height          =   585
+         Index           =   3
+         Left            =   1170
+         TabIndex        =   6
+         Top             =   1500
+         Width           =   285
+      End
+      Begin VB.Label lblSides 
+         BackColor       =   &H00FFFFFF&
+         BorderStyle     =   1  'Fixed Single
+         Height          =   285
+         Index           =   2
+         Left            =   1740
+         TabIndex        =   5
+         Top             =   1020
+         Width           =   765
+      End
+      Begin VB.Label lblSides 
+         BackColor       =   &H00FFFFFF&
+         BorderStyle     =   1  'Fixed Single
+         Height          =   585
+         Index           =   1
+         Left            =   1170
+         TabIndex        =   4
+         Top             =   90
+         Width           =   285
+      End
+      Begin VB.Label lblSides 
+         BackColor       =   &H00FFFFFF&
+         BorderStyle     =   1  'Fixed Single
+         Height          =   285
+         Index           =   0
+         Left            =   90
+         TabIndex        =   3
+         Top             =   990
+         Width           =   735
+      End
+   End
+   Begin VB.ListBox lstCtrls 
+      Height          =   2205
+      Left            =   120
+      Sorted          =   -1  'True
+      TabIndex        =   0
+      Top             =   540
+      Width           =   2385
+   End
+   Begin VB.Label lblTitle 
+      Caption         =   "Select an object, set anchors and then click Apply"
+      Height          =   255
+      Left            =   120
+      TabIndex        =   7
+      Top             =   180
+      Width           =   5235
+   End
+End
+Attribute VB_Name = "ppAnchors"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = True
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = True
+Private Sub lblSides_Click(Index As Integer)
+   Changed = True
+   'Switch  Colors between Black and White
+   If lblSides(Index).BackColor = vbWhite Then
+      lblSides(Index).BackColor = vbBlack
+   Else
+      lblSides(Index).BackColor = vbWhite
+   End If
+End Sub
+
+Private Sub lstCtrls_Click()
+  On Error Resume Next
+  Dim Inx As Long
+  For i = 0 To CtrlParent.Controls.Count - 1
+      If CtrlParent.Controls(i).Name = Left(lstCtrls, Len(CtrlParent.Controls(i).Name)) Then
+         Err.Clear
+         Inx = Val(Right(lstCtrls, Len(lstCtrls) - Len(CtrlParent.Controls(i).Name) - 1))
+         If Err <> 0 Then Inx = -1
+         If Inx = CtrlParent.Controls(i).Index Or Inx = -1 Then
+         'Convert Tag informations to Black & White!!!
+            For T = 0 To 3
+               If Mid(CtrlParent.Controls(i).Tag, T + 1, 1) = "T" Then
+                  lblSides(T).BackColor = vbBlack
+               Else
+                  lblSides(T).BackColor = vbWhite
+               End If
+            Next T
+         End If
+      End If
+   Next i
+   
+End Sub
+
+Private Sub PropertyPage_ApplyChanges()
+   On Error Resume Next
+   Dim Tg As String
+   Dim Inx As Integer
+   For i = 0 To CtrlParent.Controls.Count - 1
+      If CtrlParent.Controls(i).Name = Left(lstCtrls, Len(CtrlParent.Controls(i).Name)) Then
+         Err.Clear
+         Inx = Val(Right(lstCtrls, Len(lstCtrls) - Len(CtrlParent.Controls(i).Name) - 1))
+         If Err <> 0 Then Inx = -1
+         If Inx = CtrlParent.Controls(i).Index Or Inx = -1 Then
+            Tg = CtrlParent.Controls(i).Tag
+            CtrlParent.Controls(i).Tag = Right(Tg, Len(Tg) - 4)
+            'Change the Tag proprty of object in desired way
+            'also save the pervious value of tag.
+            For T = 3 To 0 Step -1
+               CtrlParent.Controls(i).Tag = _
+                  Left$(Not CBool(lblSides(T).BackColor), 1) _
+                  & CtrlParent.Controls(i).Tag
+            Next T
+         End If
+      End If
+   Next i
+   
+End Sub
+
+Private Sub PropertyPage_Initialize()
+   On Error Resume Next
+   Dim Vis As Boolean, Lft As Long
+   For i = 0 To CtrlParent.Controls.Count - 1
+      Err.Clear
+      Vis = CtrlParent.Controls(i).Visible
+      Lft = CtrlParent.Controls(i).Left
+      If Err = 0 Then
+         lstCtrls.AddItem CtrlParent.Controls(i).Name & IIf(CtrlParent.Controls(i).Index < 0, "", "(" & CtrlParent.Controls(i).Index & ")")
+         ' Set anchor informations for all objects
+         If InStr(1, CtrlParent.Controls(i).Tag, "*/") = 0 Then _
+            CtrlParent.Controls(i).Tag = "TTFF*/" & CtrlParent.Controls(i).Tag
+      Else
+         If InStr(1, CtrlParent.Controls(i).Tag, "*/") <> 0 Then _
+            CtrlParent.Controls(i).Tag = Right(CtrlParent.Controls(i).Tag, Len(CtrlParent.Controls(i).Tag) - 6)
+      End If
+   Next i
+   lstCtrls.ListIndex = 0
+End Sub
